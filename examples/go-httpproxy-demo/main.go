@@ -27,7 +27,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-httpproxy/httpproxy"
+	"github.com/nange/httpproxy"
 )
 
 var logErr = log.New(os.Stderr, "ERR: ", log.LstdFlags)

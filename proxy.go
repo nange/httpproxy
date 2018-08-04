@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"net/http"
 	"sync/atomic"
+	"net/url"
 )
 
 // Proxy defines parameters for running an HTTP Proxy. It implements
@@ -40,6 +41,9 @@ type Proxy struct {
 	OnConnect func(ctx *Context, host string) (ConnectAction ConnectAction,
 		newHost string)
 
+	// Forward callback. It forward the underline hijack connection
+	OnForward func(ctx *Context, host string)
+
 	// Request callback. It greets remote request.
 	// If it returns non-nil response, stops processing remote request.
 	OnRequest func(ctx *Context, req *http.Request) (resp *http.Response)
@@ -68,7 +72,9 @@ func NewProxy() (*Proxy, error) {
 func NewProxyCert(caCert, caKey []byte) (*Proxy, error) {
 	prx := &Proxy{
 		Rt: &http.Transport{TLSClientConfig: &tls.Config{},
-			Proxy: http.ProxyFromEnvironment},
+			Proxy: func(request *http.Request) (*url.URL, error) {
+				return url.Parse("socks5://127.0.0.1:1080")
+			}},
 		MitmChunked: true,
 		signer:      NewCaSignerCache(1024),
 	}

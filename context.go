@@ -45,6 +45,7 @@ type Context struct {
 
 	hijTLSConn   *tls.Conn
 	hijTLSReader *bufio.Reader
+	hijConn net.Conn
 }
 
 func (ctx *Context) onAccept(w http.ResponseWriter, r *http.Request) bool {
@@ -191,6 +192,7 @@ func (ctx *Context) doConnect(w http.ResponseWriter, r *http.Request) (b bool) {
 	hijConn := conn
 	ctx.ConnectReq = r
 	ctx.ConnectAction = ConnectProxy
+	ctx.hijConn = hijConn
 	host := r.URL.Host
 	if !hasPort.MatchString(host) {
 		host += ":80"
@@ -208,6 +210,10 @@ func (ctx *Context) doConnect(w http.ResponseWriter, r *http.Request) (b bool) {
 	ctx.ConnectHost = host
 	switch ctx.ConnectAction {
 	case ConnectProxy:
+		if ctx.Prx.OnForward != nil {
+			ctx.Prx.OnForward(ctx, host)
+			return
+		}
 		conn, err := net.Dial("tcp", host)
 		if err != nil {
 			hijConn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
