@@ -42,7 +42,7 @@ type Proxy struct {
 		newHost string)
 
 	// Forward callback. It forward the underline hijack connection
-	OnForward func(ctx *Context, host string)
+	OnForward func(ctx *Context, host string) error
 
 	// Request callback. It greets remote request.
 	// If it returns non-nil response, stops processing remote request.

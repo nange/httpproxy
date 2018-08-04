@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"errors"
 )
 
 // Context keeps context of each proxy request.
@@ -46,6 +47,13 @@ type Context struct {
 	hijTLSConn   *tls.Conn
 	hijTLSReader *bufio.Reader
 	hijConn net.Conn
+}
+
+func (ctx *Context) GetHijConn() (hijConn net.Conn, err error) {
+	if ctx.hijConn == nil {
+		return nil, errors.New("hijack conn is nil")
+	}
+	return ctx.hijConn, nil
 }
 
 func (ctx *Context) onAccept(w http.ResponseWriter, r *http.Request) bool {
@@ -211,7 +219,10 @@ func (ctx *Context) doConnect(w http.ResponseWriter, r *http.Request) (b bool) {
 	switch ctx.ConnectAction {
 	case ConnectProxy:
 		if ctx.Prx.OnForward != nil {
-			ctx.Prx.OnForward(ctx, host)
+			if err := ctx.Prx.OnForward(ctx, host); err != nil {
+				hijConn.Close()
+				ctx.doError("Forward", ErrRemoteConnect, err)
+			}
 			return
 		}
 		conn, err := net.Dial("tcp", host)
