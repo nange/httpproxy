@@ -220,7 +220,6 @@ func (ctx *Context) doConnect(w http.ResponseWriter, r *http.Request) (b bool) {
 	case ConnectProxy:
 		if ctx.Prx.OnForward != nil {
 			if err := ctx.Prx.OnForward(ctx, host); err != nil {
-				hijConn.Close()
 				ctx.doError("Forward", ErrRemoteConnect, err)
 			}
 			return
